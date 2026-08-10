@@ -1,6 +1,6 @@
 /* Service worker: cache-first app shell so the game works offline. */
 
-const CACHE = 'fortunes-foundation-v1';
+const CACHE = 'fortunes-foundation-v2';
 const SHELL = [
   './',
   './index.html',

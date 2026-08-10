@@ -169,6 +169,21 @@
     position: relative;
   }
 
+  /* ---------- password gate ---------- */
+  #gate {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--felt-1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #gateForm { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+  #gateInput {
+    font-family: inherit; font-size: 1rem; width: 10em; text-align: center;
+    background: #170f2e; color: var(--gold); border: 1px solid #6e5a8f;
+    border-radius: 6px; padding: 7px 10px;
+  }
+  .gate-text { font-style: italic; opacity: 0.85; }
+  .gate-wrong { color: #e08585; font-size: 0.85rem; min-height: 1.2em; }
+
   /* ---------- modals ---------- */
   #winOverlay, #rulesModal {
     position: fixed; inset: 0; z-index: 500;
@@ -284,11 +299,44 @@
   </div>
 </div>
 
+<div id="gate" hidden>
+  <div class="modal-box">
+    <h2>Who Approaches?</h2>
+    <p class="gate-text">Speak the password to consult the cards.</p>
+    <form id="gateForm">
+      <input id="gateInput" type="password" autocomplete="off" autofocus>
+      <button type="submit">Enter</button>
+    </form>
+    <p id="gateWrong" class="gate-wrong" hidden>The cards do not recognize you.</p>
+  </div>
+</div>
+
 <div id="rotateHint">
   <div class="turn">📱↻</div>
   <p>Rotate your phone — the cards need landscape.</p>
 </div>
 
+<script>
+  // Casual gate, not security: this is client-side and the source is public.
+  (function () {
+    const gate = document.getElementById('gate');
+    if (localStorage.getItem('ff-gate') === 'ok') return;
+    gate.hidden = false;
+    const input = document.getElementById('gateInput');
+    document.getElementById('gateForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value.trim().toLowerCase() === 'ff') {
+        localStorage.setItem('ff-gate', 'ok');
+        gate.hidden = true;
+      } else {
+        document.getElementById('gateWrong').hidden = false;
+        input.value = '';
+        input.focus();
+      }
+    });
+    setTimeout(() => input.focus(), 50);
+  })();
+</script>
 <script src="game.js"></script>
 <script src="ui.js"></script>
 <script>
