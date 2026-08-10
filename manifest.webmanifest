@@ -1,0 +1,16 @@
+{
+  "name": "Fortune's Foundation",
+  "short_name": "Fortune",
+  "description": "Tarot solitaire — FreeCell with a 74-card tarot deck.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#1b1533",
+  "theme_color": "#1b1533",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

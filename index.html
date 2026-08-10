@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1533">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Fortune's Foundation</title>
+<style>
+  :root {
+    /* width-limited on desktop, height-limited on short screens (phones in landscape) */
+    --cw: min(8vw, 88px, calc((100vh - 94px) / 5.8));
+    --ch: calc(var(--cw) * 1.45);
+    --gold: #d9b45c;
+    --felt-1: #1b1533;
+    --felt-2: #241b45;
+    --card-face: #f4ecd8;
+    --card-edge: #b9ab8a;
+    --major-face: #2c2254;
+    --wands: #c2571f;
+    --cups: #2470b8;
+    --swords: #5a6b7d;
+    --pentacles: #97711c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    background: radial-gradient(ellipse at 50% -10%, var(--felt-2), var(--felt-1) 70%);
+    color: #cfc4e8;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    touch-action: manipulation; /* no double-tap zoom; keeps taps snappy */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-size: 1.25rem; margin: 0; font-weight: normal;
+    color: var(--gold); letter-spacing: 0.12em; font-variant: small-caps;
+  }
+  .spacer { flex: 1; }
+  button {
+    font-family: inherit; font-size: 0.85rem;
+    background: transparent; color: var(--gold);
+    border: 1px solid #6e5a8f; border-radius: 6px;
+    padding: 5px 12px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: #372a5e; }
+  button:disabled { opacity: 0.35; cursor: default; }
+  .stat { font-size: 0.85rem; opacity: 0.85; }
+  label.toggle { font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  #seed {
+    width: 8.5em; font-family: inherit; font-size: 0.8rem;
+    background: #170f2e; color: #cfc4e8; border: 1px solid #4a3a70;
+    border-radius: 6px; padding: 4px 8px;
+  }
+
+  /* ---------- board ---------- */
+  #board { display: flex; flex-direction: column; height: calc(100vh - 54px); padding: 0 14px 10px; }
+  #foundations {
+    display: flex; justify-content: center; gap: calc(var(--cw) * 0.28);
+    padding: 6px 0 16px;
+  }
+  .pile { position: relative; width: var(--cw); }
+  .pile .card { position: relative; }
+  .pile-label {
+    text-align: center; font-size: 0.62rem; margin-top: 4px;
+    letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6;
+  }
+  .pile-label.blocking { color: #e08585; opacity: 1; }
+  .free-pile { margin: 0 calc(var(--cw) * 0.45); }
+  .pile.blocked .card { filter: grayscale(0.55) brightness(0.75); }
+
+  #tableau {
+    flex: 1; display: flex; justify-content: center;
+    gap: calc(var(--cw) * 0.16);
+    min-height: 0;
+  }
+  .col {
+    position: relative; width: var(--cw); min-height: var(--ch);
+    border-radius: 8px;
+  }
+  .col:empty::before, .col .card { border-radius: 8px; }
+  .col::before {
+    content: ''; position: absolute; inset: 0 0 auto 0; height: var(--ch);
+    border: 1.5px dashed #4a3a70; border-radius: 8px;
+  }
+
+  /* ---------- cards ---------- */
+  .card {
+    position: absolute; left: 0;
+    width: var(--cw); height: var(--ch);
+    background: var(--card-face);
+    border: 1px solid var(--card-edge);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.45);
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 4px 5px;
+    color: #333;
+  }
+  .card.clickable { cursor: pointer; }
+  .card.selected {
+    outline: 3px solid var(--gold);
+    outline-offset: 1px;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.55);
+  }
+  .target { border-radius: 8px; }
+  .target::after {
+    content: ''; position: absolute; inset: -3px;
+    border: 2px solid #5ec8a8; border-radius: 10px;
+    pointer-events: none; z-index: 100;
+  }
+  .col.target::after {
+    inset: auto -3px; top: calc(var(--drop-y, 0px) - 3px);
+    height: calc(var(--ch) + 2px);
+  }
+  .pile.target::after { inset: -3px -3px auto; height: calc(var(--ch) + 2px); }
+
+  .corner { display: flex; align-items: center; gap: 2px; line-height: 1; }
+  .corner-br { align-self: flex-end; transform: rotate(180deg); }
+  .rank { font-size: calc(var(--cw) * 0.21); font-weight: bold; }
+  .suit-icon { width: calc(var(--cw) * 0.17); height: calc(var(--cw) * 0.17); }
+  .center {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .center .suit-icon { width: calc(var(--cw) * 0.42); height: calc(var(--cw) * 0.42); opacity: 0.85; }
+
+  .suit-wands  { color: var(--wands); }
+  .suit-cups   { color: var(--cups); }
+  .suit-swords { color: var(--swords); }
+  .suit-pentacles { color: var(--pentacles); }
+  .suit-icon { fill: currentColor; }
+
+  .card.major {
+    background: linear-gradient(160deg, #342763, var(--major-face) 60%);
+    border-color: #8a76b8;
+    color: var(--gold);
+  }
+  .major-center { flex-direction: column; gap: 4px; text-align: center; }
+  .major-star { font-size: calc(var(--cw) * 0.30); line-height: 1; }
+  .major-name {
+    font-size: calc(var(--cw) * 0.115); line-height: 1.15;
+    font-variant: small-caps; letter-spacing: 0.04em;
+    padding: 0 3px;
+  }
+
+  .card.placeholder {
+    background: rgba(255,255,255,0.04);
+    border: 1.5px dashed #4a3a70;
+    box-shadow: none;
+    align-items: center; justify-content: center;
+    color: #6e5a8f; font-size: 0.7rem; letter-spacing: 0.1em;
+    position: relative;
+  }
+
+  /* ---------- modals ---------- */
+  #winOverlay, #rulesModal {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(12, 8, 26, 0.82);
+    display: flex; align-items: center; justify-content: center;
+  }
+  [hidden] { display: none !important; }
+  .modal-box {
+    background: var(--felt-2); border: 1px solid #6e5a8f; border-radius: 14px;
+    padding: 28px 34px; max-width: 560px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal-box h2 { color: var(--gold); font-variant: small-caps; letter-spacing: 0.1em; margin-top: 0; }
+  #fortuneSpread { display: flex; gap: 14px; justify-content: center; margin: 18px 0; }
+  #fortuneSpread .card { position: relative; }
+  #fortuneLine { font-style: italic; margin: 8px 0 4px; }
+  #winMoves { font-size: 0.85rem; opacity: 0.7; }
+  .rules-text { text-align: left; font-size: 0.9rem; line-height: 1.55; }
+  .rules-text li { margin-bottom: 7px; }
+  .rules-text b { color: var(--gold); font-weight: normal; }
+
+  /* ---------- small screens ---------- */
+  @media (max-height: 520px), (max-width: 900px) {
+    header { padding: 5px 10px; gap: 8px; }
+    h1 { font-size: 0.95rem; }
+    button { padding: 4px 9px; font-size: 0.78rem; }
+    #seed, label.toggle { display: none; }
+    #board { height: calc(100vh - 38px); padding: 0 8px 6px; }
+    #foundations { padding: 2px 0 8px; }
+    .pile-label { display: none; }
+    .modal-box { padding: 18px 20px; max-width: 92vw; max-height: 88vh; overflow-y: auto; }
+  }
+
+  /* portrait phones: the board needs landscape */
+  #rotateHint { display: none; }
+  @media (orientation: portrait) and (max-width: 620px) {
+    #rotateHint {
+      display: flex; position: fixed; inset: 0; z-index: 900;
+      background: var(--felt-1);
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; text-align: center; padding: 24px;
+    }
+    #rotateHint .turn { font-size: 3rem; }
+    #rotateHint p { margin: 0; color: var(--gold); font-variant: small-caps; letter-spacing: 0.1em; }
+  }
+</style>
+</head>
+<body>
+
+<svg style="display:none" aria-hidden="true"><defs>
+  <g id="sym-wands">
+    <rect x="10.7" y="4.5" width="2.6" height="16.5" rx="1.3" transform="rotate(38 12 12.5)"/>
+    <path d="M17.6 2.6 l0.9 2.1 2.1 0.9 -2.1 0.9 -0.9 2.1 -0.9 -2.1 -2.1 -0.9 2.1 -0.9 z"/>
+  </g>
+  <g id="sym-cups">
+    <path d="M4.5 3.5 h15 c0 6.2 -3.4 9 -7.5 9 s-7.5 -2.8 -7.5 -9 z"/>
+    <rect x="10.9" y="12" width="2.2" height="5.5"/>
+    <rect x="6.5" y="17.5" width="11" height="2.6" rx="1.3"/>
+  </g>
+  <g id="sym-swords">
+    <path d="M12 1.5 L14.2 5 V14 H9.8 V5 Z"/>
+    <rect x="6.8" y="14.3" width="10.4" height="2.3" rx="1.1"/>
+    <rect x="10.85" y="16.8" width="2.3" height="3.6"/>
+    <circle cx="12" cy="21.4" r="1.5"/>
+  </g>
+  <g id="sym-pentacles">
+    <circle cx="12" cy="12" r="9.7" fill="none" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M12 4.6 L13.85 10.05 19.6 10.1 15 13.55 16.7 19.05 12 15.7 7.3 19.05 9 13.55 4.4 10.1 10.15 10.05 Z"/>
+  </g>
+</defs></svg>
+
+<header>
+  <h1>Fortune's Foundation</h1>
+  <div class="spacer"></div>
+  <span id="moves" class="stat">moves: 0</span>
+  <input id="seed" title="Deal number — enter a number to play a specific deal">
+  <label class="toggle" title="Cards fly to the foundations automatically when legal">
+    <input type="checkbox" id="autoCollect" checked> auto-collect
+  </label>
+  <button id="undoBtn" title="Undo (U or Cmd+Z)">Undo</button>
+  <button id="restartBtn" title="Restart this deal">Restart</button>
+  <button id="newBtn">New Game</button>
+  <button id="rulesBtn" title="How to play">?</button>
+</header>
+
+<div id="board">
+  <div id="foundations"></div>
+  <div id="tableau"></div>
+</div>
+
+<div id="winOverlay" hidden>
+  <div class="modal-box">
+    <h2>Your Fortune Is Told</h2>
+    <div id="fortuneSpread"></div>
+    <p id="fortuneLine"></p>
+    <p id="winMoves"></p>
+    <button id="winNewBtn">New Game</button>
+  </div>
+</div>
+
+<div id="rulesModal" hidden>
+  <div class="modal-box">
+    <h2>How to Play</h2>
+    <ul class="rules-text">
+      <li><b>The deck</b> — 74 cards: four suits of 13 (Ace–King) plus the 22 major arcana (0–21), which act as a fifth suit.</li>
+      <li><b>The goal</b> — collect every card onto the foundations at the top. Suits build upward from their Aces (already placed). The major arcana build from both ends: up from 0 and down from 21, meeting in the middle.</li>
+      <li><b>The tableau</b> — a card may be placed on a same-suit card exactly one rank higher or lower. Only one card moves at a time. An empty column takes any card.</li>
+      <li><b>The free cell</b> — the center slot holds one card, but while it's occupied, suit cards cannot be collected. Use it to keep cards you still need from flying to the foundations.</li>
+      <li><b>Moving</b> — click a card to select it (legal spots glow green), then click a destination. Double-click sends a card to a foundation, or to the free cell.</li>
+      <li><b>Undo</b> — U or Cmd+Z. No shame in it; even the original shipped with one.</li>
+    </ul>
+    <button id="rulesClose">Close</button>
+  </div>
+</div>
+
+<div id="rotateHint">
+  <div class="turn">📱↻</div>
+  <p>Rotate your phone — the cards need landscape.</p>
+</div>
+
+<script src="game.js"></script>
+<script src="ui.js"></script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
