@@ -62,6 +62,7 @@
   button:hover:not(:disabled) { background: #372a5e; }
   button:disabled { opacity: 0.35; cursor: default; }
   .stat { font-size: 0.85rem; opacity: 0.85; }
+  .certified { color: #5ec8a8; }
   label.toggle { font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
   #seed {
     width: 8.5em; font-family: inherit; font-size: 0.8rem;
@@ -259,6 +260,7 @@
   <h1>Fortune's Foundation</h1>
   <div class="spacer"></div>
   <span id="moves" class="stat">moves: 0</span>
+  <span id="certified" class="stat certified" title="A solver has verified this deal can be won" hidden>✓ solvable</span>
   <input id="seed" title="Deal number — enter a number to play a specific deal">
   <label class="toggle" title="Cards fly to the foundations automatically when legal">
     <input type="checkbox" id="autoCollect" checked> auto-collect
@@ -338,6 +340,7 @@
   })();
 </script>
 <script src="game.js"></script>
+<script src="winnable-seeds.js"></script>
 <script src="ui.js"></script>
 <script>
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

@@ -14,10 +14,20 @@
     'The foundation holds. Your fortune is told.',
   ];
 
+  // deal from the certified-winnable list when it's available
+  const CERTIFIED = typeof WINNABLE_SEEDS !== 'undefined' ? WINNABLE_SEEDS : null;
+
   let currentSeed = randomSeed();
 
   function randomSeed() {
+    if (CERTIFIED && CERTIFIED.length) {
+      return CERTIFIED[Math.floor(Math.random() * CERTIFIED.length)];
+    }
     return Math.floor(Math.random() * 1e9);
+  }
+
+  function isCertified(seed) {
+    return !!CERTIFIED && CERTIFIED.includes(seed);
   }
 
   // ---------- card elements ----------
@@ -153,6 +163,7 @@
     // --- status bar ---
     $('#moves').textContent = `moves: ${FF.state.moves}`;
     $('#seed').value = currentSeed;
+    $('#certified').hidden = !isCertified(currentSeed);
     $('#undoBtn').disabled = FF.historyLength === 0;
 
     if (FF.isWon()) showWin();

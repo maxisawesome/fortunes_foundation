@@ -287,6 +287,11 @@ function selfTest() {
 // ---------- exports / entry ----------
 
 if (typeof module !== 'undefined' && typeof document === 'undefined') {
+  module.exports = {
+    SUITS, MAJOR, MAJOR_NAMES, cardLabel,
+    newGame, move, undo, isWon, legalTargets, canMove, getCardAt, autoCollect,
+    getState: () => state,
+  };
   if (process.argv.includes('--selftest')) selfTest();
 } else if (typeof document !== 'undefined') {
   // UI layer lives in ui.js; expose the engine on window.

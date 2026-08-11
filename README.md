@@ -42,8 +42,26 @@ rotate prompt.
 - The number in the header is the deal seed — type one in to replay a specific deal,
   or share it with a friend.
 
-Note: unlike the original (which ships only solver-verified deals), deals here are
-random and not guaranteed solvable — undo generously.
+**New Game deals only certified-winnable seeds** (marked "✓ solvable" in the
+header), like the original. Typing an arbitrary seed into the header still
+works but comes with no guarantee — in testing, only ~29% of random deals
+are winnable.
+
+## Solver
+
+`solver.js` proves deals winnable or unwinnable: best-first search over
+compact states with a transposition table (column order is canonicalized
+away), and every solution is replay-verified through the real engine.
+
+```
+node solver.js solve 6            # one seed, with timing and verification
+node solver.js scan 1 2000       # many seeds — stats + winnable list (JSON)
+```
+
+Proven-unsolvable deals had their entire reachable state space exhausted.
+Rare "unproven" deals hit the node cap and are discarded. The shipped list
+in `winnable-seeds.js` came from scanning seeds 1–2000: 584 winnable (29.2%),
+1413 proven unsolvable (70.7%), 3 unproven.
 
 ## Code
 
